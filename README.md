@@ -7,16 +7,14 @@ O pacote é baseado em duas classes:
 1. Company: essa classe cria e atualiza dados de uma empresa selecionada.
 2. Database: essa classe permite o usuário manipular as databses e tables criadas.
 
-### Exemploo de uso:
+### Exemplo de uso:
 
 No exemplo abaixo instanciamos uma empresa (no caso, a Petrobras que tem ticker=PETR4.SAO) e especificamos que os dados da empresa será salvo em uma `database` chamada `stock_market.db`.
 
 Se a `database` ainda não existe, ela será criada.
 ```python
 from av_api import *
-
 key='sua_chave'
-
 petr=Company(ticker="PETR4.SAO", key=key, database='stock_market.db')
 ```
 Note que `sua_chave` é a chave criada no API (clique [aqui](https://www.alphavantage.co/support/#api-key) para criar sua chave).
@@ -60,7 +58,7 @@ Retorna:
 | 2021-05-11   	| PETR4.SAO 	| 25.15 	|
 | 2021-05-10   	| PETR4.SAO 	| 24.70 	|
 
-O mesmo procedimento pode ser feito para uma outra ação de escolha do usuário. Assim, repetindo o procedimento feito para a petrobras para as ações da B3, temos:
+O mesmo procedimento pode ser feito para uma outra ação de escolha do usuário. Assim, repetindo o procedimento para as ações da B3, temos:
 
 ```python
 b3=Company(ticker="B3SA3.SAO", key=key, database='stock_market.db')
