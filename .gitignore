@@ -1,0 +1,4 @@
+key.pkl
+stock_market.db
+__pycache__/*
+test.py

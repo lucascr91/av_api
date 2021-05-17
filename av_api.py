@@ -3,6 +3,9 @@ import requests
 import pandas as pd
 
 class Company:
+    """
+    This class create and update data from a selected company
+    """
     def __init__(self, ticker: str, key: str, database: str, outputsize='compact'):
         self.ticker=ticker
         self.key=key
@@ -22,19 +25,14 @@ class Company:
             pass
         data=response.json()
         return data
-
-    def time_series_daily(self, periods_to_update ='all'):
+    @property
+    def time_series_daily(self):
         """
-        This property is use to fill the company's table. If 'all' is selected, the API gives the whole data, according to selected outputsize. For a specific number of days, use an integer (example: periods_to_update=5 updates only the last 5 days of data). If you are building the table for the first time, use 'all' option. 
+        This property is use to fill the company's table. 
         """
         data=self.data
         lista_tuples = [(self.ticker, date,data['Time Series (Daily)'][date]['4. close']) for date in data['Time Series (Daily)'].keys()]
-        if periods_to_update=='all':
-            return lista_tuples
-        elif isinstance(periods_to_update, int):
-            return lista_tuples[:-periods_to_update]
-        else:
-            raise ValueError("Please, use 'all' or an integer in periods_to_update argument")
+        return lista_tuples
 
     def create_table(self):
         """
@@ -45,27 +43,43 @@ class Company:
         cursor.execute("""
         CREATE TABLE {} (
             ticker text,
-            date text,
+            date text PRIMARY KEY,
             close real
         )
         """.format(self.ticker.split('.')[0].lower()))
         connection.commit()
         connection.close()
 
-    def update_table(self, periods_to_update='all'):
+    def update_table(self, only_days=None, full=True):
         """
-        Update company table
+        Update company table. 
         """
-        connection = sqlite3.connect(self.database)
-        cursor = connection.cursor()
-        cursor.executemany("""
-        INSERT INTO {}
-        VALUES (?,?,?)
-        """.format(self.ticker.split('.')[0].lower()), self.time_series_daily(periods_to_update))
-        connection.commit()
-        connection.close()
+        if full:
+            connection = sqlite3.connect(self.database)
+            cursor = connection.cursor()
+            cursor.executemany("""
+            INSERT INTO {}
+            VALUES (?,?,?)
+            """.format(self.ticker.split('.')[0].lower()), self.time_series_daily)
+            connection.commit()
+            connection.close()
+        else:
+            if isinstance(only_days, int):
+                connection = sqlite3.connect(self.database)
+                cursor = connection.cursor()
+                cursor.executemany("""
+                INSERT OR REPLACE INTO {}
+                VALUES (?,?,?)
+                """.format(self.ticker.split('.')[0].lower()), self.time_series_daily[:only_days])
+                connection.commit()
+                connection.close()
+            else:
+                raise ValueError("If full is mark as False, the integer 'only_days' must be specified.")
 
 class Database:
+    """
+    This class allow the user to manipulate the saved databases
+    """
     def __init__(self, file: str):
         self.file=file
 
@@ -89,16 +103,6 @@ class Database:
         connection.commit()
         connection.close()
 
-    # def drop_record(self, table_name: str, rows: list):
-    #     """
-    #     Drop a list of rows by id
-    #     """
-    #     connection = sqlite3.connect(self.file)
-    #     cursor = connection.cursor()
-    #     cursor.execute("DELETE FROM {} WHERE rowid IN ".format(table_name))
-    #     connection.commit()
-    #     connection.close()
-
     def to_dataframe(self, table_name: str):
         """
         Returns a pandas DataFrame
@@ -107,8 +111,5 @@ class Database:
         df = pd.read_sql_query("SELECT * FROM {}".format(table_name), connection)
         connection.close()
         df.set_index('date', inplace=True)
-        return df
-
-    # def drop_database(self):
-        
+        return df        
 
